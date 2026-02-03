@@ -1,0 +1,87 @@
+{
+  "team": [
+    {
+      "employee_filename": "Ahme-Rafie.pdf",
+      "assignments": [
+        {
+          "task_name": "Frontend Development",
+          "start_day": 5,
+          "end_day": 13,
+          "skills_match": [
+            "javascript",
+            "html",
+            "css",
+            "react"
+          ],
+          "missing_skills": []
+        }
+      ]
+    },
+    {
+      "employee_filename": "Mostafa-walid-hassan-FlowCV-Resume-20251020.pdf",
+      "assignments": [
+        {
+          "task_name": "Database Design",
+          "start_day": 2,
+          "end_day": 5,
+          "skills_match": [
+            "sql"
+          ],
+          "missing_skills": [
+            "database modeling"
+          ]
+        }
+      ]
+    },
+    {
+      "employee_filename": "Louay-Saber-Elsayed-CV.pdf",
+      "assignments": [
+        {
+          "task_name": "Testing and Quality Assurance",
+          "start_day": 17,
+          "end_day": 23,
+          "skills_match": [],
+          "missing_skills": [
+            "test-driven development",
+            "integration testing",
+            "unit testing"
+          ]
+        }
+      ]
+    },
+    {
+      "employee_filename": "Hussein Fayed - Backend Developer - CV.pdf",
+      "assignments": [
+        {
+          "task_name": "Backend Development",
+          "start_day": 5,
+          "end_day": 13,
+          "skills_match": [
+            "node.js",
+            "api design"
+          ],
+          "missing_skills": [
+            "express"
+          ]
+        },
+        {
+          "task_name": "Authentication and Authorization",
+          "start_day": 13,
+          "end_day": 17,
+          "skills_match": [
+            "jwt"
+          ],
+          "missing_skills": [
+            "password hashing",
+            "oauth"
+          ]
+        }
+      ]
+    }
+  ],
+  "unassigned_tasks": [
+    "Requirements Gathering",
+    "Deployment and Maintenance"
+  ],
+  "rationale": "Formed a team of 4 based on semantic skill matching and availability. 2 tasks could not be assigned."
+}

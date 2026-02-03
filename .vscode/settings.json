@@ -1,0 +1,10 @@
+{
+  // Point VS Code to the project venv interpreter so imports resolve.
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+  // Help the language server find local modules (chains package, intro scripts).
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/chains",
+    "${workspaceFolder}/1_introdction"
+  ]
+}
