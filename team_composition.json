@@ -1,87 +1,135 @@
 {
   "team": [
     {
-      "employee_filename": "Ahme-Rafie.pdf",
+      "employee_filename": "Ossama-ElsheikhResume.pdf",
       "assignments": [
         {
-          "task_name": "Frontend Development",
-          "start_day": 5,
-          "end_day": 13,
-          "skills_match": [
-            "javascript",
-            "html",
-            "css",
-            "react"
-          ],
-          "missing_skills": []
-        }
-      ]
-    },
-    {
-      "employee_filename": "Mostafa-walid-hassan-FlowCV-Resume-20251020.pdf",
-      "assignments": [
-        {
-          "task_name": "Database Design",
+          "task_name": "describe dataset and objective",
           "start_day": 2,
-          "end_day": 5,
+          "end_day": 3,
           "skills_match": [
-            "sql"
+            "data analysis"
           ],
           "missing_skills": [
-            "database modeling"
-          ]
+            "project planning"
+          ],
+          "semantic_match_score": 0.8899269104003906
         }
       ]
     },
     {
-      "employee_filename": "Louay-Saber-Elsayed-CV.pdf",
+      "employee_filename": "Abdelrahman Mohamed-Data Analyst.pdf",
       "assignments": [
         {
-          "task_name": "Testing and Quality Assurance",
-          "start_day": 17,
-          "end_day": 23,
-          "skills_match": [],
-          "missing_skills": [
-            "test-driven development",
-            "integration testing",
-            "unit testing"
-          ]
-        }
-      ]
-    },
-    {
-      "employee_filename": "Hussein Fayed - Backend Developer - CV.pdf",
-      "assignments": [
-        {
-          "task_name": "Backend Development",
+          "task_name": "choose pre-trained model",
           "start_day": 5,
-          "end_day": 13,
+          "end_day": 6,
           "skills_match": [
-            "node.js",
-            "api design"
+            "deep learning"
           ],
           "missing_skills": [
-            "express"
-          ]
+            "model selection"
+          ],
+          "semantic_match_score": 0.7908799648284912
         },
         {
-          "task_name": "Authentication and Authorization",
-          "start_day": 13,
-          "end_day": 17,
+          "task_name": "implement model from scratch",
+          "start_day": 6,
+          "end_day": 10,
           "skills_match": [
-            "jwt"
+            "deep learning",
+            "python"
           ],
           "missing_skills": [
-            "password hashing",
-            "oauth"
-          ]
+            "tensorflow"
+          ],
+          "semantic_match_score": 0.8665935397148132
+        },
+        {
+          "task_name": "train and test models",
+          "start_day": 10,
+          "end_day": 13,
+          "skills_match": [
+            "model training",
+            "deep learning",
+            "python"
+          ],
+          "missing_skills": [],
+          "semantic_match_score": 0.8510997295379639
+        },
+        {
+          "task_name": "regularize models",
+          "start_day": 13,
+          "end_day": 15,
+          "skills_match": [
+            "deep learning"
+          ],
+          "missing_skills": [
+            "early stopping",
+            "dropout"
+          ],
+          "semantic_match_score": 0.5148337483406067
+        },
+        {
+          "task_name": "evaluate and modify models",
+          "start_day": 15,
+          "end_day": 18,
+          "skills_match": [
+            "neural networks",
+            "deep learning"
+          ],
+          "missing_skills": [
+            "model evaluation"
+          ],
+          "semantic_match_score": 0.7787464261054993
+        }
+      ]
+    },
+    {
+      "employee_filename": "Abdullah El-Ashry CV.pdf",
+      "assignments": [
+        {
+          "task_name": "prepare dataset",
+          "start_day": 3,
+          "end_day": 5,
+          "skills_match": [
+            "pandas",
+            "data preprocessing"
+          ],
+          "missing_skills": [],
+          "semantic_match_score": 1.0
+        }
+      ]
+    },
+    {
+      "employee_filename": "Adel-Ramadan-CV.pdf",
+      "assignments": [
+        {
+          "task_name": "choose dataset",
+          "start_day": 0,
+          "end_day": 2,
+          "skills_match": [
+            "data sourcing"
+          ],
+          "missing_skills": [
+            "kaggle"
+          ],
+          "semantic_match_score": 0.6200525760650635
+        },
+        {
+          "task_name": "create presentation",
+          "start_day": 18,
+          "end_day": 20,
+          "skills_match": [],
+          "missing_skills": [
+            "presentation",
+            "powerpoint"
+          ],
+          "semantic_match_score": 0.4550785422325134
         }
       ]
     }
   ],
-  "unassigned_tasks": [
-    "Requirements Gathering",
-    "Deployment and Maintenance"
-  ],
-  "rationale": "Formed a team of 4 based on semantic skill matching and availability. 2 tasks could not be assigned."
+  "unassigned_tasks": [],
+  "rationale": "Requested a team of 4. Formed a team of 4 based on semantic skill matching and availability. 0 tasks could not be assigned."
 }

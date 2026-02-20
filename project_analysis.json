@@ -2,148 +2,153 @@
   "provided_skills": [],
   "tasks": [
     {
-      "name": "Requirements Gathering",
-      "description": "Define user registration and access control requirements",
+      "name": "choose dataset",
+      "description": "Search for a dataset from any website like Kaggle with a minimum of 5000 data points",
       "depends_on": [],
       "skills": [
-        "Interviewing",
-        "Requirements Analysis"
+        "data sourcing",
+        "kaggle"
       ],
       "start_days_from_kickoff": 0,
       "duration_days": 2
     },
     {
-      "name": "Database Design",
-      "description": "Design database schema for user data",
+      "name": "describe dataset and objective",
+      "description": "Describe the chosen dataset and the objective of the project",
       "depends_on": [
-        "Requirements Gathering"
+        "choose dataset"
       ],
       "skills": [
-        "Database Modeling",
-        "SQL"
+        "data analysis",
+        "project planning"
       ],
       "start_days_from_kickoff": 2,
+      "duration_days": 1
+    },
+    {
+      "name": "prepare dataset",
+      "description": "Prepare the dataset using preprocessing techniques if needed",
+      "depends_on": [
+        "describe dataset and objective"
+      ],
+      "skills": [
+        "data preprocessing",
+        "pandas"
+      ],
+      "start_days_from_kickoff": 3,
+      "duration_days": 2
+    },
+    {
+      "name": "choose pre-trained model",
+      "description": "Choose the most suitable pre-trained model for the problem",
+      "depends_on": [
+        "prepare dataset"
+      ],
+      "skills": [
+        "deep learning",
+        "model selection"
+      ],
+      "start_days_from_kickoff": 5,
+      "duration_days": 1
+    },
+    {
+      "name": "implement model from scratch",
+      "description": "Implement a deep learning model from scratch",
+      "depends_on": [
+        "choose pre-trained model"
+      ],
+      "skills": [
+        "deep learning",
+        "python",
+        "tensorflow"
+      ],
+      "start_days_from_kickoff": 6,
+      "duration_days": 4
+    },
+    {
+      "name": "train and test models",
+      "description": "Train and test both the pre-trained and implemented models",
+      "depends_on": [
+        "implement model from scratch"
+      ],
+      "skills": [
+        "deep learning",
+        "model training",
+        "python"
+      ],
+      "start_days_from_kickoff": 10,
       "duration_days": 3
     },
     {
-      "name": "Frontend Development",
-      "description": "Develop user registration and login forms",
+      "name": "regularize models",
+      "description": "Regularize both models using regularization techniques",
       "depends_on": [
-        "Database Design"
+        "train and test models"
       ],
       "skills": [
-        "HTML",
-        "CSS",
-        "JavaScript",
-        "React"
-      ],
-      "start_days_from_kickoff": 5,
-      "duration_days": 8
-    },
-    {
-      "name": "Backend Development",
-      "description": "Develop API for user registration and access control",
-      "depends_on": [
-        "Database Design"
-      ],
-      "skills": [
-        "Node.js",
-        "Express",
-        "API Design"
-      ],
-      "start_days_from_kickoff": 5,
-      "duration_days": 8
-    },
-    {
-      "name": "Authentication and Authorization",
-      "description": "Implement authentication and authorization mechanisms",
-      "depends_on": [
-        "Backend Development"
-      ],
-      "skills": [
-        "OAuth",
-        "JWT",
-        "Password Hashing"
+        "deep learning",
+        "dropout",
+        "early stopping"
       ],
       "start_days_from_kickoff": 13,
-      "duration_days": 4
+      "duration_days": 2
     },
     {
-      "name": "Testing and Quality Assurance",
-      "description": "Test user registration and access control functionality",
+      "name": "evaluate and modify models",
+      "description": "Evaluate the models and modify the neural network layers to improve efficiency",
       "depends_on": [
-        "Frontend Development",
-        "Backend Development",
-        "Authentication and Authorization"
+        "regularize models"
       ],
       "skills": [
-        "Unit Testing",
-        "Integration Testing",
-        "Test-Driven Development"
+        "deep learning",
+        "model evaluation",
+        "neural networks"
       ],
-      "start_days_from_kickoff": 17,
-      "duration_days": 6
+      "start_days_from_kickoff": 15,
+      "duration_days": 3
     },
     {
-      "name": "Deployment and Maintenance",
-      "description": "Deploy and maintain user registration and access control system",
+      "name": "create presentation",
+      "description": "Create a PPT presentation of the project",
       "depends_on": [
-        "Testing and Quality Assurance"
+        "evaluate and modify models"
       ],
       "skills": [
-        "Cloud Computing",
-        "Containerization",
-        "Monitoring and Logging"
+        "powerpoint",
+        "presentation"
       ],
-      "start_days_from_kickoff": 23,
-      "duration_days": 4
+      "start_days_from_kickoff": 18,
+      "duration_days": 2
     }
   ],
   "all_skills": [
-    "angular",
-    "api design",
-    "aws",
-    "azure",
     "backend development",
-    "cloud computing",
-    "containerization",
-    "css",
-    "database modeling",
-    "databases",
-    "devops",
-    "docker",
-    "express",
-    "express.js",
-    "google cloud",
-    "graphql",
-    "html",
-    "integration testing",
-    "interviewing",
-    "javascript",
-    "jwt",
-    "kubernetes",
-    "monitoring and logging",
-    "mysql",
-    "nestjs",
-    "next.js",
-    "node.js",
-    "oauth",
-    "password hashing",
-    "postgresql",
+    "data analysis",
+    "data preprocessing",
+    "data science",
+    "data sourcing",
+    "deep learning",
+    "django",
+    "dropout",
+    "early stopping",
+    "fastapi",
+    "flask",
+    "kaggle",
+    "keras",
+    "machine learning",
+    "model evaluation",
+    "model selection",
+    "model training",
+    "neural networks",
+    "numpy",
+    "pandas",
+    "powerpoint",
+    "presentation",
     "programming",
-    "react",
-    "redux",
-    "requirements analysis",
-    "rest",
-    "sass",
-    "sql",
-    "sqlite",
-    "tailwind",
-    "test-driven development",
-    "typescript",
-    "unit testing",
-    "vue.js",
-    "web development"
+    "project planning",
+    "python",
+    "pytorch",
+    "tensorflow"
   ],
-  "rationale": "These skills are needed to develop a comprehensive user registration and access control system, covering requirements gathering, database design, frontend and backend development, authentication and authorization, testing, and deployment. The skills listed are essential for ensuring a secure, scalable, and maintainable system."
+  "rationale": "The skills listed are necessary to complete the tasks in the project, which involves data sourcing, preprocessing, and analysis, as well as deep learning model implementation, training, and evaluation. These skills are required to ensure the project is completed successfully and the models are accurate and efficient."
 }

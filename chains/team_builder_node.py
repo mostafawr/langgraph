@@ -16,10 +16,6 @@ from .common_imports import (
 from .project_analyzer_node import ProjectTask, ProjectAnalysisOutput
 
 import numpy as np
-from .skills_graph import create_skills_graph, get_skill_relatives
-
-# --- Initialize Skills Graph ---
-SKILLS_GRAPH = create_skills_graph()
 
 # -----------------------------
 # 1. DATA SCHEMAS (Pydantic)
@@ -41,6 +37,7 @@ class EmployeeAssignment(BaseModel):
     end_day: int
     skills_match: List[str]
     missing_skills: List[str]
+    semantic_match_score: float = 0.0
 
 class TeamMember(BaseModel):
     """Represents a team member and all their assigned tasks."""
@@ -64,72 +61,10 @@ class TeamBuilderState(TypedDict):
 # -----------------------------
 # 2. HELPER FUNCTIONS
 # -----------------------------
-def get_embedding(skill: str) -> np.ndarray:
-    """Creates a simple embedding for a skill."""
-    # A real implementation would use a pre-trained model like Word2Vec or GloVe,
-    # but for this example, we'll use a simple hash-based embedding.
-    import hashlib
-    return np.frombuffer(hashlib.sha256(skill.encode()).digest(), dtype=np.float32)[:5]
+from skill_matching import initialize_db
+from chromadb.utils import embedding_functions
+import numpy as np
 
-def get_graph_based_score(employee_skills: List[str], task_skills: List[str]) -> float:
-    """
-    Calculates a score based on the skills graph and embeddings.
-    """
-    if not task_skills or not employee_skills:
-        return 0.0
-
-    score = 0.0
-    
-    emp_skill_set = set(employee_skills)
-    task_skill_set = set(task_skills)
-
-    # 1. Direct matches
-    direct_matches = emp_skill_set.intersection(task_skill_set)
-    score += len(direct_matches) * 1.0  # Full point for direct match
-
-    remaining_task_skills = task_skill_set - direct_matches
-    graph_matched_skills = set()
-
-    # 2. Graph-based matches (parents/children)
-    if remaining_task_skills:
-        for t_skill in remaining_task_skills:
-            parents, children = get_skill_relatives(SKILLS_GRAPH, t_skill)
-            related_skills = set()
-            if parents:
-                related_skills.update(parents)
-            if children:
-                related_skills.update(children)
-            
-            if emp_skill_set.intersection(related_skills):
-                score += 0.5  # Half point for related skill
-                graph_matched_skills.add(t_skill)
-                    
-    # 3. Embedding-based similarity for remaining skills
-    embedding_skills_to_check = remaining_task_skills - graph_matched_skills
-    unmatched_emp_skills = emp_skill_set - direct_matches
-
-    if embedding_skills_to_check and unmatched_emp_skills:
-        task_embeddings = np.array([get_embedding(s) for s in embedding_skills_to_check])
-        emp_embeddings = np.array([get_embedding(s) for s in unmatched_emp_skills])
-        
-        # Compute cosine similarity
-        try:
-            # Normalize embeddings to unit vectors for cosine similarity
-            task_embeddings_norm = task_embeddings / np.linalg.norm(task_embeddings, axis=1, keepdims=True)
-            emp_embeddings_norm = emp_embeddings / np.linalg.norm(emp_embeddings, axis=1, keepdims=True)
-            
-            cosine_sim = np.dot(task_embeddings_norm, emp_embeddings_norm.T)
-
-            # Add the max similarity for each task skill to the score
-            if cosine_sim.size > 0:
-                max_sim_scores = np.max(cosine_sim, axis=1)
-                score += np.sum(max_sim_scores)
-        except (ValueError, ZeroDivisionError):
-            # Handle cases with zero-length vectors if they occur
-            pass
-            
-    # Normalize score
-    return score / len(task_skill_set) if task_skill_set else 0.0
 
 def is_employee_available(schedule: List[Tuple[int, int]], task_start: int, task_duration: int) -> bool:
     """Checks if an employee is available for a task."""
@@ -145,13 +80,25 @@ def is_employee_available(schedule: List[Tuple[int, int]], task_start: int, task
 
 def team_builder_node(state: TeamBuilderState) -> Dict[str, Any]:
     """
-    Analyzes project requirements and available employee skills to form the best possible team,
-    allowing one employee to handle multiple tasks sequentially.
+    Analyzes project requirements and available employee skills to form the best possible team.
+    This version uses a more advanced matching algorithm that finds the best subset of
+    employee skills for each task.
     """
     print("--- NODE: TEAM BUILDER ---")
     project_analysis_file = "project_analysis.json"
     skills_summary_file = "skill_results/all_skills_summary.json"
     output_filename = "team_composition.json"
+    num_employees = state["num_employees"]
+    MIN_SEMANTIC_SCORE_THRESHOLD = 0.2 
+    SKILL_SIMILARITY_THRESHOLD = 0.5
+
+    # --- Initialize Embedding Function ---
+    try:
+        _, embedding_function = initialize_db(model_name="all-mpnet-base-v2")
+        print("✅ Initialized embedding function.")
+    except Exception as e:
+        print(f"❌ Error initializing embedding function: {e}")
+        return {"team": {"team": [], "unassigned_tasks": [], "rationale": f"Failed to initialize embedding function: {e}"}}
 
     # --- Load and Validate Inputs ---
     try:
@@ -174,58 +121,124 @@ def team_builder_node(state: TeamBuilderState) -> Dict[str, Any]:
         return {"team": {"team": [], "unassigned_tasks": [], "rationale": f"Failed to load employee skills: {e}"}}
 
     # --- 1. Prepare Employee Data ---
-    employees = []
-    for emp in employee_skills_data:
-        emp_skill_list = []
-        for category in emp.summary.values():
-            emp_skill_list.extend([skill.lower() for skill in category])
-        employees.append({
-            "filename": emp.filename,
-            "skills": list(set(emp_skill_list)),
-            "schedule": []  # List of (start_day, end_day) tuples
-        })
+    employees = {
+        emp.filename: {
+            "skills": list(set(skill.lower() for category in emp.summary.values() for skill in category if category)),
+            "schedule": []
+        }
+        for emp in employee_skills_data
+    }
 
-    # --- 2. Sort tasks by start day to handle dependencies ---
+    # --- 2. Sort tasks by start day ---
     sorted_tasks = sorted(project_tasks, key=lambda t: t.start_days_from_kickoff)
     
-    # --- 3. Assign tasks using a greedy approach ---
-    assignments: Dict[str, List[EmployeeAssignment]] = {emp["filename"]: [] for emp in employees}
+    # --- 3. Assign tasks using the new scoring logic ---
+    assignments: Dict[str, List[EmployeeAssignment]] = {emp_filename: [] for emp_filename in employees}
     unassigned_tasks = []
+    current_team_members = set()
 
     for task in sorted_tasks:
-        best_employee = None
-        max_score = -1
+        task_skills = [skill.lower() for skill in task.skills if skill]
+        if not task_skills:
+            unassigned_tasks.append(task.name)
+            continue
 
-        task_skills = [skill.lower() for skill in task.skills]
         task_start = task.start_days_from_kickoff
         task_duration = task.duration_days
-
-        for emp in employees:
-            if is_employee_available(emp["schedule"], task_start, task_duration):
-                score = get_graph_based_score(emp["skills"], task_skills)
-                if score > max_score:
-                    max_score = score
-                    best_employee = emp
         
-        if best_employee and max_score >= 0.5:  # Set a minimum score threshold
-            # Assign task
-            task_end = task_start + task_duration
-            best_employee["schedule"].append((task_start, task_end))
+        candidate_scores = []
+        
+        # --- Iterate through all employees to find the best candidate ---
+        for emp_filename, emp_data in employees.items():
+            emp_skills_list = emp_data["skills"]
             
-            emp_skills_set = set(best_employee["skills"])
-            task_skills_set = set(task_skills)
-            
-            assignment = EmployeeAssignment(
-                task_name=task.name,
-                start_day=task_start,
-                end_day=task_end,
-                skills_match=list(emp_skills_set.intersection(task_skills_set)),
-                missing_skills=list(task_skills_set - emp_skills_set)
-            )
-            assignments[best_employee["filename"]].append(assignment)
-        else:
-            unassigned_tasks.append(task.name)
+            if not emp_skills_list:
+                candidate_scores.append({"employee_id": emp_filename, "match_score": 0})
+                continue
 
+            # --- New scoring logic: Average of best matches for each task skill ---
+            task_skill_embeddings = np.array(embedding_function(task_skills))
+            emp_skill_embeddings = np.array(embedding_function(emp_skills_list))
+
+            # Normalize embeddings
+            task_skill_norms = np.linalg.norm(task_skill_embeddings, axis=1, keepdims=True)
+            emp_skill_norms = np.linalg.norm(emp_skill_embeddings, axis=1, keepdims=True)
+            task_skill_embeddings = np.divide(task_skill_embeddings, task_skill_norms, where=task_skill_norms != 0)
+            emp_skill_embeddings = np.divide(emp_skill_embeddings, emp_skill_norms, where=emp_skill_norms != 0)
+
+            # Cosine similarity matrix
+            similarity_matrix = np.dot(task_skill_embeddings, emp_skill_embeddings.T)
+            similarity_matrix = np.clip(similarity_matrix, -1.0, 1.0)
+
+            # For each task skill, find the highest similarity score among employee skills
+            max_sim_scores_per_task_skill = np.max(similarity_matrix, axis=1)
+            
+            # The final score is the average of these best matches
+            average_score = np.mean(max_sim_scores_per_task_skill)
+            candidate_scores.append({"employee_id": emp_filename, "match_score": average_score})
+
+        # --- Sort candidates by the new match score ---
+        # Sort by match_score (descending) and then employee_id (descending) to ensure determinism
+        sorted_candidates = sorted(candidate_scores, key=lambda x: (x["match_score"], x["employee_id"]), reverse=True)
+
+        assigned = False
+        for candidate in sorted_candidates:
+            emp_filename = candidate["employee_id"]
+            match_score = candidate["match_score"]
+
+            if match_score < MIN_SEMANTIC_SCORE_THRESHOLD:
+                continue
+
+            if not is_employee_available(employees[emp_filename]["schedule"], task_start, task_duration):
+                continue
+            
+            is_in_team = emp_filename in current_team_members
+            can_add_to_team = len(current_team_members) < num_employees
+
+            if is_in_team or can_add_to_team:
+                task_end = task_start + task_duration
+                employees[emp_filename]["schedule"].append((task_start, task_end))
+                current_team_members.add(emp_filename)
+                
+                emp_skills_list = employees[emp_filename]["skills"]
+                emp_skills_set = set(emp_skills_list)
+                task_skills_set = set(task_skills)
+
+                # --- Skill matching logic remains for final output ---
+                direct_matches = emp_skills_set.intersection(task_skills_set)
+                semantically_matched_skills = set()
+                remaining_task_skills = list(task_skills_set - direct_matches)
+
+                if remaining_task_skills and emp_skills_list:
+                    # We've already calculated the similarity matrix, let's reuse it
+                    # Find indices of remaining and employee skills
+                    remaining_indices = [task_skills.index(s) for s in remaining_task_skills]
+                    
+                    # Use the sub-matrix for remaining skills
+                    sub_similarity_matrix = similarity_matrix[remaining_indices, :]
+                    max_sim_scores = np.max(sub_similarity_matrix, axis=1)
+                    
+                    for i, skill in enumerate(remaining_task_skills):
+                        if max_sim_scores[i] >= SKILL_SIMILARITY_THRESHOLD:
+                            semantically_matched_skills.add(skill)
+
+                skills_match = list(direct_matches.union(semantically_matched_skills))
+                missing_skills = list(task_skills_set - set(skills_match))
+
+                assignment = EmployeeAssignment(
+                    task_name=task.name,
+                    start_day=task_start,
+                    end_day=task_end,
+                    skills_match=skills_match,
+                    missing_skills=missing_skills,
+                    semantic_match_score=match_score
+                )
+                assignments[emp_filename].append(assignment)
+                assigned = True
+                break
+
+        if not assigned:
+            unassigned_tasks.append(task.name)
     # --- 4. Format the output ---
     team_members = [
         TeamMember(employee_filename=emp_filename, assignments=emp_assignments)
@@ -235,7 +248,8 @@ def team_builder_node(state: TeamBuilderState) -> Dict[str, Any]:
     # --- 5. Validate and Save Output ---
     try:
         rationale = (
-            f"Formed a team of {len(team_members)} based on semantic skill matching and availability. "
+            f"Requested a team of {num_employees}. Formed a team of {len(team_members)} "
+            f"based on semantic skill matching and availability. "
             f"{len(unassigned_tasks)} tasks could not be assigned."
         )
         team_composition = TeamBuilderOutput(
@@ -244,7 +258,7 @@ def team_builder_node(state: TeamBuilderState) -> Dict[str, Any]:
             rationale=rationale,
         )
         with open(output_filename, "w", encoding="utf-8") as f:
-            json.dump(team_composition.model_dump(), f, indent=2)
+            json.dump(team_composition.model_dump(round_trip=True), f, indent=2)
         print(f"✅ Team composition saved to {output_filename}")
         
     except Exception as e:
@@ -255,4 +269,3 @@ def team_builder_node(state: TeamBuilderState) -> Dict[str, Any]:
         return {"team": error_payload}
 
     return {"team": team_composition.model_dump()}
-

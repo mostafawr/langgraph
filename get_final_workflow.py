@@ -2,18 +2,26 @@
 """
 The final, integrated workflow for the project analysis and team building process.
 """
-import json
-from typing import List, Dict, Any, TypedDict
-import tkinter as tk
-from tkinter import filedialog
-from pypdf import PdfReader
-import os
+import sys
+from typing import Dict, TypedDict
 
 from langgraph.graph import StateGraph, END
 
-from chains import extractor_with_langgraph
-from chains.project_analyzer_node import project_analyzer_node, HumanMessage
-from chains.team_builder_node import team_builder_node
+try:
+    from chains import extractor_with_langgraph
+    from chains.common_imports import json, List, Any, os
+    from chains.project_analyzer_node import project_analyzer_node, HumanMessage, select_pdf_file, extract_text_from_pdf
+    from chains.team_builder_node import team_builder_node
+except ImportError as e:
+    print("\n" + "!"*60)
+    print("❌ IMPORT ERROR: Could not load required modules.")
+    print(f"Error details: {e}")
+    print("-" * 60)
+    print(f"You are currently running Python from:\n👉 {sys.executable}")
+    print("\nMake sure you install packages to THIS environment using:")
+    print(f"   {sys.executable} -m pip install langchain-groq langgraph pypdf")
+    print("!"*60 + "\n")
+    sys.exit(1)
 
 # -----------------------------
 # 1. OVERALL GRAPH STATE
@@ -85,34 +93,6 @@ app = workflow.compile()
 # 4. MAIN EXECUTION
 # -----------------------------
 
-import tkinter as tk
-from tkinter import filedialog
-from pypdf import PdfReader
-import os
-
-def select_pdf_file():
-    """Opens a file dialog to select a PDF file."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    file_path = filedialog.askopenfilename(
-        title="Select a PDF file",
-        filetypes=[("PDF files", "*.pdf")]
-    )
-    return file_path
-
-
-def extract_text_from_pdf(pdf_path: str) -> str:
-    """Extracts text from a PDF file."""
-    try:
-        reader = PdfReader(pdf_path)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() or ""
-        return text
-    except Exception as e:
-        print(f"Error reading PDF: {e}")
-        return ""
-
 def main():
     """
     Main function to run the final workflow.
@@ -134,7 +114,14 @@ def main():
             print("No PDF file selected or file not found.")
             return
     elif choice == "description":
-        project_description = input("Enter the project description: ").strip()
+        print("Enter the project description (type 'EOF' on a new line when you're done):")
+        lines = []
+        while True:
+            line = input()
+            if line == "EOF":
+                break
+            lines.append(line)
+        project_description = "\n".join(lines)
         skills_str = input("Enter initial skills (comma-separated), if any: ").strip()
         if skills_str:
             project_skills = [s.strip() for s in skills_str.split(",")]

@@ -93,13 +93,20 @@ def main():
             return
         project_description = extract_text_from_pdf(file_path)
     else:
-        project_description = input("Enter the project description: ")
+        print("Enter the project description (type 'EOF' on a new line when you're done):")
+        lines = []
+        while True:
+            line = input()
+            if line == "EOF":
+                break
+            lines.append(line)
+        project_description = "\n".join(lines)
 
     project_skills_str = input("Enter initial skills (comma-separated): ")
     project_skills = [s.strip() for s in project_skills_str.split(",") if s.strip()]
 
     num_employees_str = input("Enter the desired team size: ")
-    num_employees = int(num_employees_str) if num_employees_str.isdigit() else 0
+    num_employees = int(num_employees_str) if num_employees_str.isdigit() else 22
 
     initial_state = {
         "project_description": project_description,

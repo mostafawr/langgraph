@@ -106,3 +106,6 @@ venv.bak/
 
 # Project specific
 skill_results/
+project_analysis.json
+team_composition.json
+employee_db/

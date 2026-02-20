@@ -17,12 +17,9 @@ from .common_imports import (
     load_env,
     make_llm,
     validator,
+    PdfReader,
 )
 
-import tkinter as tk
-from tkinter import filedialog
-
-from pypdf import PdfReader
 # Load environment variables (API keys, etc.)
 load_env()
 
@@ -32,6 +29,9 @@ llm = make_llm()
 
 def select_pdf_file():
     """Opens a file dialog to select a PDF file."""
+    import tkinter as tk
+    from tkinter import filedialog
+
     root = tk.Tk()
     root.withdraw()  # Hide the main window
     file_path = filedialog.askopenfilename(
@@ -85,8 +85,6 @@ class ProjectTask(BaseModel):
         1, description="Estimated duration in days for the task once started"
     )
 
-
-from .skills_graph import create_skills_graph, get_skill_relatives
 class ProjectAnalysisOutput(BaseModel):
     """LLM output schema for the project analyzer."""
 
@@ -192,9 +190,11 @@ Rules:
 - Provide rough timing: `start_days_from_kickoff` as an integer offset (0 for day one), and `duration_days` as how long the task takes once started.
 - Keep skills concise (skill or tool names only, no sentences).
 - `rationale` should be 1-2 sentences explaining why these skills are needed.
+- IMPORTANT: To ensure deterministic output, sort all lists (skills, dependencies) alphabetically and use lowercase for skills.
 """
 
-    response = llm.invoke(prompt)
+    # Enforce deterministic output by binding temperature to 0 and setting a fixed seed
+    response = llm.bind(temperature=0, seed=42).invoke(prompt)
     raw = response.content
     json_text = extract_json_string(raw)
     output_filename = "project_analysis.json"
@@ -203,25 +203,12 @@ Rules:
         parsed = json.loads(json_text)
         validated = ProjectAnalysisOutput(**parsed)
 
-        # --- Skill Expansion ---
-        skills_graph = create_skills_graph()
+        # --- Collect All Skills (Simple Aggregation) ---
         all_skills = set(validated.provided_skills)
         for task in validated.tasks:
             for skill in task.skills:
                 all_skills.add(skill.lower())
-
-        expanded_skills = set(all_skills)
-        for skill in all_skills:
-            parents, children = get_skill_relatives(skills_graph, skill)
-            if parents:
-                for p in parents:
-                    expanded_skills.add(p)
-            if children:
-                for c in children:
-                    expanded_skills.add(c)
-        
-        validated.all_skills = sorted(list(expanded_skills))
-        # --- End Skill Expansion ---
+        validated.all_skills = sorted(list(all_skills))
 
         with open(output_filename, "w", encoding="utf-8") as f:
             json.dump(validated.model_dump(), f, indent=2)
@@ -242,6 +229,3 @@ Rules:
 
 
     return [AIMessage(content=json_text)]
-
-
-
